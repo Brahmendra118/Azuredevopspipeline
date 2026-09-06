@@ -4,11 +4,6 @@ from openai import OpenAI
 
 app = Flask(__name__)
 
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
-
-
 @app.route("/", methods=["GET", "POST"])
 def home():
 
@@ -21,6 +16,13 @@ def home():
         if user_text:
 
             try:
+                api_key = os.getenv("OPENAI_API_KEY")
+
+                if not api_key:
+                    response = "OpenAI API key is not configured."
+                else:
+                    Client = OpenAI(api_key=api_key)
+                    
                 completion = client.chat.completions.create(
                     model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
                     messages=[
