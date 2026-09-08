@@ -145,7 +145,7 @@ stages:
             --name ai-flask-app \
             --restart unless-stopped \
             -p 127.0.0.1:8000:8000 \
-            --env-file /root/.openai_env \
+            --env-file /home/azureuser/.openai_env
             pipeineregisry.azurecr.io/ai-flask-app:latest
 
           echo "========================================"
