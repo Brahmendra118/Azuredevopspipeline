@@ -84,7 +84,7 @@ stages:
 
     steps:
     - task: SSH@0
-      displayName: 'Deploy AI Agent to VM'
+      displayName: 'Test VM Command'
       inputs:
         sshEndpoint: 'azure-vm-ssh'
         runOptions: 'inline'
