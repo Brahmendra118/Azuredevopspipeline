@@ -76,7 +76,6 @@ stages:
 
 - stage: Deploy
   displayName: 'Deploy to Azure VM'
-
   dependsOn: Build
   condition: succeeded()
 
@@ -85,37 +84,36 @@ stages:
     displayName: 'Deploy Docker Container'
 
     steps:
-
     - task: SSH@0
-      displayName: 'Deploy to Azure VM'
+      displayName: 'Deploy AI Agent to VM'
       inputs:
         sshEndpoint: 'azure-vm-ssh'
         runOptions: 'inline'
         inline: |
-          echo "Logging in to Azure Container Registry..."
+          set -e
 
+          echo "Logging into Azure using VM managed identity..."
+          az login --identity
+
+          echo "Logging into Azure Container Registry..."
           az acr login --name pipeineregisry
 
-          echo "Pulling latest Docker image..."
-
+          echo "Pulling latest image..."
           docker pull pipeineregisry.azurecr.io/ai-flask-app:latest
 
           echo "Stopping old container..."
-
           docker stop ai-flask-app || true
 
           echo "Removing old container..."
-
           docker rm ai-flask-app || true
 
           echo "Starting new container..."
-
           docker run -d \
             --name ai-flask-app \
             --restart unless-stopped \
             -p 127.0.0.1:8000:8000 \
+            -e OPENAI_API_KEY="$OPENAI_API_KEY" \
             pipeineregisry.azurecr.io/ai-flask-app:latest
 
-          echo "Deployment completed!"
-
+          echo "Deployment successful!"
           docker ps
