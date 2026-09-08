@@ -14,10 +14,9 @@ variables:
 
 stages:
 
-# =========================
+# =========================================================
 # STAGE 1 - TEST
-# =========================
-
+# =========================================================
 - stage: Test
   displayName: 'Test Application'
 
@@ -42,13 +41,11 @@ stages:
       displayName: 'Run Tests'
 
 
-# =========================
-# STAGE 2 - DOCKER BUILD
-# =========================
-
+# =========================================================
+# STAGE 2 - BUILD AND PUSH DOCKER IMAGE
+# =========================================================
 - stage: Build
   displayName: 'Build and Push Docker Image'
-
   dependsOn: Test
   condition: succeeded()
 
@@ -70,9 +67,9 @@ stages:
           latest
 
 
-# =========================
-# STAGE 3 - DEPLOY TO VM
-# =========================
+# =========================================================
+# STAGE 3 - DEPLOY TO AZURE VM
+# =========================================================
 - stage: Deploy
   displayName: 'Deploy to Azure VM'
   dependsOn: Build
@@ -83,11 +80,88 @@ stages:
     displayName: 'Deploy Docker Container'
 
     steps:
+
     - task: SSH@0
-      displayName: 'Test VM Command'
+      displayName: 'Deploy AI Agent to VM'
       inputs:
         sshEndpoint: 'azure-vm-ssh'
         runOptions: 'commands'
         commands: |
-           echo "HELLO FROM AZURE VM"
-           /usr/bin/docker --version
+          set -e
+
+          echo "========================================"
+          echo "STEP 1 - Connected to Azure VM"
+          echo "========================================"
+
+          whoami
+
+          echo "========================================"
+          echo "STEP 2 - Checking Docker"
+          echo "========================================"
+
+          /usr/bin/docker --version
+
+          echo "========================================"
+          echo "STEP 3 - Checking Azure CLI"
+          echo "========================================"
+
+          /usr/bin/az --version
+
+          echo "========================================"
+          echo "STEP 4 - Logging into Azure using VM Identity"
+          echo "========================================"
+
+          /usr/bin/az login --identity --allow-no-subscriptions
+
+          echo "========================================"
+          echo "STEP 5 - Logging into Azure Container Registry"
+          echo "========================================"
+
+          /usr/bin/az acr login --name pipeineregisry
+
+          echo "========================================"
+          echo "STEP 6 - Pulling Latest Docker Image"
+          echo "========================================"
+
+          /usr/bin/docker pull pipeineregisry.azurecr.io/ai-flask-app:latest
+
+          echo "========================================"
+          echo "STEP 7 - Stopping Old Container"
+          echo "========================================"
+
+          /usr/bin/docker stop ai-flask-app || true
+
+          echo "========================================"
+          echo "STEP 8 - Removing Old Container"
+          echo "========================================"
+
+          /usr/bin/docker rm ai-flask-app || true
+
+          echo "========================================"
+          echo "STEP 9 - Starting New Container"
+          echo "========================================"
+
+          /usr/bin/docker run -d \
+            --name ai-flask-app \
+            --restart unless-stopped \
+            -p 127.0.0.1:8000:8000 \
+            --env-file /root/.openai_env \
+            pipeineregisry.azurecr.io/ai-flask-app:latest
+
+          echo "========================================"
+          echo "STEP 10 - Checking Container"
+          echo "========================================"
+
+          /usr/bin/docker ps
+
+          echo "========================================"
+          echo "STEP 11 - Checking Application"
+          echo "========================================"
+
+          sleep 5
+
+          /usr/bin/docker ps --filter "name=ai-flask-app"
+
+          echo "========================================"
+          echo "DEPLOYMENT SUCCESSFUL"
+          echo "========================================"
