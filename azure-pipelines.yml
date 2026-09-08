@@ -126,16 +126,16 @@ stages:
           /usr/bin/docker pull pipeineregisry.azurecr.io/ai-flask-app:latest
 
           echo "========================================"
-          echo "STEP 7 - Stopping Old Container"
+          echo "STEP 7 - Removing old container if it exists"
           echo "========================================"
 
-          /usr/bin/docker stop ai-flask-app || true
+          /usr/bin/docker rm -f ai-flask-app 2>/dev/null || true
 
           echo "========================================"
-          echo "STEP 8 - Removing Old Container"
+          echo "STEP 8 - Starting new container"
           echo "========================================"
 
-          /usr/bin/docker rm ai-flask-app || true
+          /usr/bin/docker run -d --name ai-flask-app --restart unless-stopped -p 127.0.0.1:8000:8000 --env-file /home/azureuser/.openai_env pipeineregisry.azurecr.io/ai-flask-app:latest
 
           echo "========================================"
           echo "STEP 9 - Starting New Container"
