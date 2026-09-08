@@ -89,37 +89,6 @@ stages:
         sshEndpoint: 'azure-vm-ssh'
         runOptions: 'inline'
         inline: |
-          set -x
-
-          echo "STEP 1 - Connected to VM"
-
-          echo "STEP 2 - Checking Docker"
-          /usr/bin/docker --version
-
-          echo "STEP 3 - Checking Azure CLI"
-          /usr/bin/az --version
-
-          echo "STEP 4 - Checking ACR login"
-          /usr/bin/az acr login --name pipeineregisry
-
-          echo "STEP 5 - Pulling image"
-          /usr/bin/docker pull pipeineregisry.azurecr.io/ai-flask-app:latest
-
-          echo "STEP 6 - Stopping old container"
-          /usr/bin/docker stop ai-flask-app || true
-
-          echo "STEP 7 - Removing old container"
-          /usr/bin/docker rm ai-flask-app || true
-
-          echo "STEP 8 - Starting new container"
-          /usr/bin/docker run -d \
-            --name ai-flask-app \
-            --restart unless-stopped \
-            -p 127.0.0.1:8000:8000 \
-            --env-file /root/.openai_env \
-            pipeineregisry.azurecr.io/ai-flask-app:latest
-
-          echo "STEP 9 - Checking deployment"
-          /usr/bin/docker ps
-
-          echo "STEP 10 - Deployment successful"
+           echo "HELLO FROM AZURE VM"
+           /usr/bin/docker --version
+           echo "DONE"
