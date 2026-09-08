@@ -92,10 +92,7 @@ stages:
         inline: |
           set -e
 
-          echo "Logging into Azure using VM managed identity..."
-          az login --identity
-
-          echo "Logging into Azure Container Registry..."
+          echo "Logging into ACR..."
           az acr login --name pipeineregisry
 
           echo "Pulling latest image..."
@@ -112,8 +109,10 @@ stages:
             --name ai-flask-app \
             --restart unless-stopped \
             -p 127.0.0.1:8000:8000 \
-            -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+            --env-file /root/.openai_env \
             pipeineregisry.azurecr.io/ai-flask-app:latest
 
-          echo "Deployment successful!"
+          echo "Checking deployment..."
           docker ps
+
+          echo "Deployment successful!"
