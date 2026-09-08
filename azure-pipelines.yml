@@ -76,6 +76,7 @@ stages:
 
 - stage: Deploy
   displayName: 'Deploy to Azure VM'
+
   dependsOn: Build
   condition: succeeded()
 
@@ -84,6 +85,7 @@ stages:
     displayName: 'Deploy Docker Container'
 
     steps:
+
     - task: SSH@0
       displayName: 'Deploy AI Agent to VM'
       inputs:
@@ -92,27 +94,51 @@ stages:
         inline: |
           set -e
 
-          echo "Logging into ACR..."
-          az acr login --name pipeineregisry
+          echo "======================================"
+          echo "Starting deployment"
+          echo "======================================"
 
-          echo "Pulling latest image..."
-          docker pull pipeineregisry.azurecr.io/ai-flask-app:latest
+          echo "Checking Azure CLI..."
+          /usr/bin/az --version
+
+          echo "Checking Docker..."
+          /usr/bin/docker --version
+
+          echo "Logging into Azure using Managed Identity..."
+          /usr/bin/az login --identity --allow-no-subscriptions
+
+          echo "Logging into Azure Container Registry..."
+          /usr/bin/az acr login --name pipeineregisry
+
+          echo "Pulling latest Docker image..."
+          /usr/bin/docker pull pipeineregisry.azurecr.io/ai-flask-app:latest
 
           echo "Stopping old container..."
-          docker stop ai-flask-app || true
+          /usr/bin/docker stop ai-flask-app || true
 
           echo "Removing old container..."
-          docker rm ai-flask-app || true
+          /usr/bin/docker rm ai-flask-app || true
 
           echo "Starting new container..."
-          docker run -d \
+          /usr/bin/docker run -d \
             --name ai-flask-app \
             --restart unless-stopped \
             -p 127.0.0.1:8000:8000 \
             --env-file /root/.openai_env \
             pipeineregisry.azurecr.io/ai-flask-app:latest
 
-          echo "Checking deployment..."
-          docker ps
+          echo "Waiting for container..."
+          sleep 5
 
+          echo "Checking container status..."
+          /usr/bin/docker ps
+
+          echo "Checking API key..."
+          /usr/bin/docker exec ai-flask-app sh -c 'test -n "$OPENAI_API_KEY" && echo "API key loaded successfully" || (echo "API key missing"; exit 1)'
+
+          echo "Checking application..."
+          /usr/bin/curl -f http://127.0.0.1:8000/ || exit 1
+
+          echo "======================================"
           echo "Deployment successful!"
+          echo "======================================"
