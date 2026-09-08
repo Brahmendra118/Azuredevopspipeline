@@ -87,8 +87,7 @@ stages:
       displayName: 'Test VM Command'
       inputs:
         sshEndpoint: 'azure-vm-ssh'
-        runOptions: 'inline'
-        inline: |
+        runOptions: 'commands'
+        commands: |
            echo "HELLO FROM AZURE VM"
            /usr/bin/docker --version
-           echo "DONE"
